@@ -23,6 +23,7 @@ These files are meant to be **copied into a project and adapted**, not imported 
    - Static assets **before** the gate — the HTML, CSS, and the pin pad itself must load for an unauthenticated visitor.
    - The gate **before** all API/data routes — everything under `/api/` (except `/api/auth/*`) returns 401 until the PIN is entered.
    - `/healthz` stays unauthenticated (the deploy pipeline polls it).
+   - ⚠️ The guard protects **only `/api/`**. Paths outside it (server-rendered pages, ad-hoc data routes, exports) pass through unauthenticated by design — that's how the pin pad loads. If you add a data-bearing route, put it under `/api/` or extend the guard to cover its prefix.
 
 ```js
 const express = require('express');
