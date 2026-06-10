@@ -46,7 +46,10 @@ function mountGate(app) {
       cookie: {
         httpOnly: true,
         sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production',
+        // Secure by DEFAULT — only plain-http when explicitly developing locally.
+        // (Gating on NODE_ENV === 'production' fails open: nothing in the deploy
+        // path sets NODE_ENV, so the cookie would silently ship without Secure.)
+        secure: process.env.NODE_ENV !== 'development',
         maxAge: THIRTY_DAYS_MS,
       },
     })
@@ -73,9 +76,13 @@ function mountGate(app) {
   // Guard: every /api route registered after mountGate() requires a session.
   // /healthz and /api/auth/* pass through; non-API paths (pages, assets that
   // slipped past the static handler) are left alone so the pin pad can load.
+  // Compare against a LOWERCASED path: Express routing is case-insensitive by
+  // default, so /API/things would otherwise slip past a case-sensitive check
+  // here and still match the /api/things handler — a full gate bypass.
   app.use((req, res, next) => {
-    if (req.path === '/healthz' || req.path.startsWith('/api/auth/')) return next();
-    if (!req.path.startsWith('/api/')) return next();
+    const p = req.path.toLowerCase();
+    if (p === '/healthz' || p.startsWith('/api/auth/')) return next();
+    if (!p.startsWith('/api/')) return next();
     if (req.session && req.session.authenticated) return next();
     return res.status(401).json({ error: 'PIN required' });
   });
