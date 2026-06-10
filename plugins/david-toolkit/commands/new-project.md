@@ -67,6 +67,8 @@ For each of `staging` and `prod`:
 
 Never assign subscription- or RG-level roles. Role assignments can take ~1–2 min to propagate; if the first deploy 403s, wait and retry before debugging.
 
+**Windows/git-bash gotcha:** `--scope "/subscriptions/..."` gets mangled by MSYS path conversion into a `C:/Program Files/Git/...` path, and `az` fails with `MissingSubscription`. Prefix the command with `MSYS_NO_PATHCONV=1` (or run via PowerShell) for every `az` call that takes a `--scope`.
+
 ## Phase 6 — GitHub repo and wiring
 
 1. `gh repo create DavidJGarcia-apps/<name> --private` (public only if the human said so) — **created empty; do not push yet.**
