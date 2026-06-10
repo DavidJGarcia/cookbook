@@ -1,0 +1,89 @@
+/* pin-pad.css — styles for the gate-auth PIN pad overlay (see pin-pad.js). */
+
+.pin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 18, 25, 0.96);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.pin-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2rem 1.5rem;
+}
+
+.pin-title {
+  color: #f3f4f6;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 1.125rem;
+  letter-spacing: 0.04em;
+}
+
+.pin-dots {
+  display: flex;
+  gap: 0.875rem;
+}
+
+.pin-dot {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  border: 2px solid #9ca3af;
+  transition: background 0.1s ease;
+}
+
+.pin-dot-filled {
+  background: #f3f4f6;
+  border-color: #f3f4f6;
+}
+
+.pin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.pin-key {
+  width: 4.25rem;
+  height: 4.25rem;
+  border: 1px solid rgba(243, 244, 246, 0.25);
+  border-radius: 50%;
+  background: rgba(243, 244, 246, 0.06);
+  color: #f3f4f6;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 1.5rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pin-key:active {
+  background: rgba(243, 244, 246, 0.25);
+}
+
+.pin-key-empty {
+  visibility: hidden;
+}
+
+.pin-key-back {
+  font-size: 1.25rem;
+}
+
+.pin-shake {
+  animation: pin-shake 0.4s ease;
+}
+
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}

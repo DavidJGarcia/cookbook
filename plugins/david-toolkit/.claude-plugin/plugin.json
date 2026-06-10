@@ -1,0 +1,8 @@
+{
+  "name": "david-toolkit",
+  "version": "0.1.0",
+  "description": "David's development toolkit: orc, a grill-first development orchestrator that drives feature work from idea through plan, build, verification, and handoff; and new-project, a paved-road app bootstrap that takes a name and an idea to a hosted app with staging/prod CI/CD.",
+  "author": {
+    "name": "DavidJGarcia"
+  }
+}
