@@ -43,7 +43,7 @@ Create the project directory with the **pipeline-proving stub** — dependency-f
 - `docs/specs/idea.md` — the idea paragraph verbatim, plus "Bootstrap date, stub status, next step: run `/orc` for the first feature."
 - `provision.json` — see Phase 7; start it now and append as you create things.
 
-Run `npm test` and `npm run build` locally; both must pass before anything is provisioned.
+Run `npm install` (generates `package-lock.json` — **commit it**; the reusable workflows run `npm ci`, which fails without a lockfile even for zero-dependency projects), then `npm test` and `npm run build`; all must pass before anything is provisioned.
 
 ## Phase 4 — Azure resources
 
