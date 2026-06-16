@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "extraKnownMarketplaces": {
+    "david-cookbook": {
+      "source": {
+        "source": "github",
+        "repo": "DavidJGarcia/cookbook"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "david-toolkit@david-cookbook": true
+  }
+}

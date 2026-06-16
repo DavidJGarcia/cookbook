@@ -21,10 +21,18 @@ Then enable the `david-toolkit` plugin when prompted (or via `/plugin`).
 
 App repos created by `/new-project` commit a `.claude/settings.json` that references this marketplace and enables the plugin, so anyone (or any agent) opening the repo in Claude Code gets `/orc` and `/new-project` automatically — no manual install step.
 
+### In Claude Code on the web
+
+Cloud (web) sessions read the same committed `.claude/settings.json` and install the plugin at session start by fetching the marketplace from GitHub. Two things to know:
+
+- This repo now commits its own `.claude/settings.json`, so web sessions opened on the cookbook itself also get `/orc` and `/new-project`.
+- Because the plugin is fetched from GitHub, the environment's [network policy](https://code.claude.com/docs/en/claude-code-on-the-web) must allow GitHub. The default **Trusted** policy does; **None** blocks the fetch, and **Custom** must allowlist `github.com`.
+
 ## Repo map
 
 | Path | What it is |
 |---|---|
+| `.claude/settings.json` | Registers the `david-cookbook` marketplace and enables `david-toolkit`, so sessions on this repo (local or web) auto-load `/orc` and `/new-project`. |
 | `.claude-plugin/marketplace.json` | The `david-cookbook` plugin marketplace manifest. |
 | `plugins/david-toolkit/` | The plugin: manifest + `commands/` (`orc.md`, `new-project.md`). |
 | `docs/infra-decisions.md` | How infrastructure choices get made per project — posture, criteria, heuristics. |
