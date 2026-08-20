@@ -32,15 +32,24 @@ Create the project directory with the **pipeline-proving stub** — dependency-f
 - `.github/workflows/staging.yml` and `production.yml` — thin callers exactly per `platform/README.md` (staging: `pull_request` types `[opened, synchronize, reopened, closed]`, concurrency group `staging` — one constant group per repo so concurrent PRs serialize against the single staging app — with cancel-in-progress, job id `ci`, `uses: DavidJGarcia-apps/platform/.github/workflows/staging.yml@v1` with `app: <name>` and the documented `permissions`; production: `push` to `main`, concurrency `production` no-cancel, job id `ci`, `uses: .../production.yml@v1`). If this text and `platform/README.md` ever disagree, the README wins.
 - `AGENTS.md` — from cookbook `templates/AGENTS-house-style.md`, placeholders filled (name, both URLs).
 - `CLAUDE.md` — first line `@AGENTS.md`, nothing else needed.
-- `.claude/settings.json` (committed) — registers the cookbook marketplace and enables `david-toolkit`, so cloud agents load orc/new-project automatically:
+- `.claude/settings.json` (committed) — registers the cookbook marketplace, enables `david-toolkit`, and denies the self-scheduling tools, so cloud agents load orc/new-project automatically and can't burn tokens on timer-driven polling:
   ```json
   {
+    "permissions": {
+      "deny": [
+        "CronCreate",
+        "ScheduleWakeup",
+        "mcp__Claude_Code_Remote__send_later",
+        "mcp__claude-code-remote__send_later"
+      ]
+    },
     "extraKnownMarketplaces": {
       "david-cookbook": { "source": { "source": "github", "repo": "DavidJGarcia/cookbook" } }
     },
     "enabledPlugins": { "david-toolkit@david-cookbook": true }
   }
   ```
+  The deny list is deliberate: agents must wait on real events (webhook subscriptions, background commands that exit) rather than waking on a timer to re-check state that probably hasn't changed. Both spellings of the `send_later` MCP tool are listed because the server name differs between local and cloud sessions.
 - `docs/specs/idea.md` — the idea paragraph verbatim, plus "Bootstrap date, stub status, next step: run `/orc` for the first feature."
 - `provision.json` — see Phase 7; start it now and append as you create things.
 

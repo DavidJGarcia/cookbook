@@ -199,9 +199,14 @@ Gate each step on whether the relevant infrastructure exists. If the project has
 
 Cut a PR, then drive it all the way to mergeable — don't just fire off CI and walk away. Treat the steps below as a follow-up loop that re-engages on every PR create or update: each push restarts watch → fix → confirm until the PR is genuinely mergeable.
 
-1. **Watch CI without blocking.** Kick the watch off in the background rather than polling in the foreground:
+1. **Watch CI without blocking — on events, never on a timer.** Every wake must be caused by something actually happening. In order of preference:
+   - **Subscribe to PR activity** (`subscribe_pr_activity`, if available) and end your turn. CI results, reviews, and comments then arrive as webhook events that wake you. This is the default — nothing runs while you wait.
    - For a single "CI finished" signal, use Bash `run_in_background` with a command that exits when the run resolves (e.g. `gh pr checks <pr> --watch`); you'll be re-invoked when it exits.
-   - To see each check land as it happens, use the `Monitor` tool with a poll loop over `gh pr checks`. Either way, match **every** terminal state — success *and* failure — so a red build can't masquerade as "still running."
+   - To see each check land as it happens, use the `Monitor` tool with a poll loop over `gh pr checks` — it blocks in one call and returns on the condition, so it costs no tokens while waiting.
+
+   Either way, match **every** terminal state — success *and* failure — so a red build can't masquerade as "still running."
+
+   **Never schedule a self check-in to re-poll a PR.** `CronCreate`, `ScheduleWakeup`, and `send_later` are denied in the paved-road settings precisely because a timer wakes the model to re-read state that usually hasn't moved. If you genuinely have no event source and no blocking wait, say so and hand back — don't invent a polling loop.
 2. **Fix and re-push on red.** When a check fails, pull the failing logs (`gh run view --log-failed`), fix the actual cause, push, and watch again. Loop until green. Don't hand off on a red build, and don't paper over a flaky failure without understanding it.
 3. **Triage every review comment — automatically, on every push.** Standardized repos auto-request a Copilot review on PR creation and re-review on each push; humans may comment too. After CI settles on each push, fetch the PR's reviews and inline comments (`gh api repos/<o>/<r>/pulls/<n>/reviews` and `.../comments`) and handle every one: **fix it** and push (which restarts this loop), or **reply with a one-line reason** why not and resolve the thread (GraphQL `resolveReviewThread`). Triage like any other review finding — don't blindly apply suggestions, and never leave a comment silently unaddressed: zero open review threads is part of the ready-to-merge bar. Log won't-fix calls in the decision log.
 4. **Confirm actually-mergeable.** Green checks aren't the whole bar: verify the branch is current with its base, there are no conflicts, no unresolved review threads remain, and any required reviews/approvals or branch-protection gates are satisfied. Surface anything only a human can clear (required human approval, protected-branch overrides) in the handoff.

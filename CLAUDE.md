@@ -10,7 +10,7 @@ Three files wire the toolkit to auto-load in any consuming repo:
 
 - `.claude-plugin/marketplace.json` — declares the `david-cookbook` marketplace, points at `plugins/david-toolkit`.
 - `plugins/david-toolkit/` — `plugin.json` + `commands/*.md`. Each command's behavior is entirely its Markdown prose; there's no code behind it.
-- `.claude/settings.json` — registers the marketplace (GitHub `DavidJGarcia/cookbook`) and enables the plugin. App repos created by `/new-project` commit this same snippet, so sessions fetch the plugin from GitHub at startup.
+- `.claude/settings.json` — registers the marketplace (GitHub `DavidJGarcia/cookbook`), enables the plugin, and denies the self-scheduling tools (`CronCreate`, `ScheduleWakeup`, `send_later`). App repos created by `/new-project` commit this same snippet, so sessions fetch the plugin from GitHub at startup and inherit the no-timer-polling rule.
 
 Editing a `commands/*.md` file *is* changing behavior for every session that loads the plugin — but only after it's pushed, since the marketplace is fetched from GitHub.
 
