@@ -11,6 +11,7 @@
 - When planning or gathering requirements, ask clarifying questions as **one numbered list directly in chat**. The human strongly prefers reading a full list at once — do not use interactive question widgets or polls, and do not drip questions one at a time.
 - Verify changes on the **staging deployment**, not just locally. "Works on my machine" is not done; "verified on staging" is.
 - **Never merge PRs.** The human merges.
+- **Watch PRs by event, never by timer.** Subscribe, then end the turn — events wake the session. Never arm a scheduled check-in to re-poll a PR. Full posture: `.claude/skills/steward/SKILL.md`.
 - **Never deploy manually.** Staging deploys automatically on PR open/update; production deploys automatically on merge to `main`.
 
 ## Conventions

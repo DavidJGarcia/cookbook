@@ -207,6 +207,8 @@ Cut a PR, then drive it all the way to mergeable — don't just fire off CI and 
 4. **Confirm actually-mergeable.** Green checks aren't the whole bar: verify the branch is current with its base, there are no conflicts, no unresolved review threads remain, and any required reviews/approvals or branch-protection gates are satisfied. Surface anything only a human can clear (required human approval, protected-branch overrides) in the handoff.
 5. **Staging deploy.** If there's a staging deploy, confirm it completed and the change is actually live, then verify against it. Staging — not your local box — is where the feature's real behavior should be exercised and completed (e.g. the actual CRUD operations against staging data) and where the handoff's demonstrated flows should be captured, since it's the closest thing to production.
 
+**Watch by event, never by timer.** Within a turn, use the background watch above. Across turns, subscribe to PR activity and end the turn — that *is* how you wait. Never arm a scheduled check-in to re-poll the PR (`send_later`, `create_trigger`, `/loop`, foreground `sleep`); if events dry up, say so in the handoff. Full posture: `.claude/skills/steward/SKILL.md`.
+
 Getting to *ready-to-merge* is the goal — do **not** merge yourself; the human owns that call.
 
 If there's no CI/staging, run the full test suite locally and the app's smoke checks, and note this in the handoff.
