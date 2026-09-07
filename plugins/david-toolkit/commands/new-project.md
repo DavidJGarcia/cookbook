@@ -32,15 +32,20 @@ Create the project directory with the **pipeline-proving stub** — dependency-f
 - `.github/workflows/staging.yml` and `production.yml` — thin callers exactly per `platform/README.md` (staging: `pull_request` types `[opened, synchronize, reopened, closed]`, concurrency group `staging` — one constant group per repo so concurrent PRs serialize against the single staging app — with cancel-in-progress, job id `ci`, `uses: DavidJGarcia-apps/platform/.github/workflows/staging.yml@v1` with `app: <name>` and the documented `permissions`; production: `push` to `main`, concurrency `production` no-cancel, job id `ci`, `uses: .../production.yml@v1`). If this text and `platform/README.md` ever disagree, the README wins.
 - `AGENTS.md` — from cookbook `templates/AGENTS-house-style.md`, placeholders filled (name, both URLs).
 - `CLAUDE.md` — first line `@AGENTS.md`, nothing else needed.
-- `.claude/settings.json` (committed) — registers the cookbook marketplace and enables `david-toolkit`, so cloud agents load orc/new-project automatically:
+- `.claude/settings.json` (committed) — registers the cookbook marketplace and enables `david-toolkit`, so cloud agents load orc/new-project automatically, and denies `send_later` so no agent can arm a scheduled PR check-in (PR watching here is event-driven; see the steward skill below):
   ```json
   {
     "extraKnownMarketplaces": {
       "david-cookbook": { "source": { "source": "github", "repo": "DavidJGarcia/cookbook" } }
     },
-    "enabledPlugins": { "david-toolkit@david-cookbook": true }
+    "enabledPlugins": { "david-toolkit@david-cookbook": true },
+    "permissions": {
+      "deny": ["mcp__claude-code-remote__send_later", "mcp__Claude_Code_Remote__send_later"]
+    }
   }
   ```
+  Both spellings of the server name are listed on purpose — the tool is registered with different casing across environments, and a deny rule is an exact string match.
+- `.claude/skills/steward/SKILL.md` — copy of cookbook `templates/steward-SKILL.md`, verbatim. Cloud agents read this path before acting on PR events, and it is what tells them to subscribe and stop rather than arm a self check-in. The `permissions.deny` above removes the means; this file supplies the intent, so ship both.
 - `docs/specs/idea.md` — the idea paragraph verbatim, plus "Bootstrap date, stub status, next step: run `/orc` for the first feature."
 - `provision.json` — see Phase 7; start it now and append as you create things.
 

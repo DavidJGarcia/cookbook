@@ -28,13 +28,28 @@ Cloud (web) sessions read the same committed `.claude/settings.json` and install
 - This repo now commits its own `.claude/settings.json`, so web sessions opened on the cookbook itself also get `/orc` and `/new-project`.
 - Because the plugin is fetched from GitHub, the environment's [network policy](https://code.claude.com/docs/en/claude-code-on-the-web) must allow GitHub. The default **Trusted** policy does; **None** blocks the fetch, and **Custom** must allowlist `github.com`.
 
+## No timed check-ins
+
+Agents here watch pull requests **by event, not by timer**. They subscribe to PR activity and end the turn; CI failures, review comments, and merge-conflict notices wake the session on their own. Arming a scheduled self check-in to re-poll a PR spends a full context window per tick to usually find nothing changed, multiplied by every open PR.
+
+Two layers enforce this, and both ship into every project `/new-project` creates:
+
+- **`permissions.deny` on `send_later`** in the committed `.claude/settings.json` — removes the means. The cloud harness only asks for a check-in *if the tool is available*, so denying it settles the matter rather than arguing with it.
+- **`.claude/skills/steward/SKILL.md`** — supplies the intent, and is the path cloud agents read before acting on PR events. It also covers the mechanisms a deny rule can't name (`create_trigger` Routines, `/loop`, foreground `sleep`).
+
+The trade: webhook delivery isn't guaranteed, so a PR that goes red between events may sit until someone pokes it. That's accepted here — the steward skill tells agents to say so rather than quietly arm a timer.
+
+To apply this to a repo that predates the change, copy both files in from this repo.
+
 ## Repo map
 
 | Path | What it is |
 |---|---|
-| `.claude/settings.json` | Registers the `david-cookbook` marketplace and enables `david-toolkit`, so sessions on this repo (local or web) auto-load `/orc` and `/new-project`. |
+| `.claude/settings.json` | Registers the `david-cookbook` marketplace and enables `david-toolkit`, so sessions on this repo (local or web) auto-load `/orc` and `/new-project`. Also denies `send_later`, so agents can't arm scheduled PR check-ins. |
+| `.claude/skills/steward/SKILL.md` | PR-watching posture for agents on this repo: subscribe and act on events, never arm a timed check-in. Cloud agents read this path before handling PR events. Copy of `templates/steward-SKILL.md`. |
 | `.claude-plugin/marketplace.json` | The `david-cookbook` plugin marketplace manifest. |
 | `plugins/david-toolkit/` | The plugin: manifest + `commands/` (`orc.md`, `new-project.md`). |
 | `docs/infra-decisions.md` | How infrastructure choices get made per project — posture, criteria, heuristics. |
 | `snippets/gate-auth/` | Reusable single-shared-PIN gate (Express reference): server middleware + touch-friendly PIN pad overlay. Copied into projects, not imported. |
 | `templates/AGENTS-house-style.md` | The canonical `AGENTS.md` template new projects start from. |
+| `templates/steward-SKILL.md` | Seed copied to each new project's `.claude/skills/steward/SKILL.md` by `/new-project`. |
