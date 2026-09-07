@@ -39,6 +39,8 @@ Two layers enforce this, and both ship into every project `/new-project` creates
 
 The trade: webhook delivery isn't guaranteed, so a PR that goes red between events may sit until someone pokes it. That's accepted here — the steward skill tells agents to say so rather than quietly arm a timer.
 
+The agent-facing copies (the skill, the `/orc` step, the AGENTS bullet) are deliberately terse — they're loaded into every session, so the reasoning lives here instead of in their context window.
+
 To apply this to a repo that predates the change, copy both files in from this repo.
 
 ## Repo map

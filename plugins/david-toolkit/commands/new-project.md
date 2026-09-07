@@ -44,8 +44,8 @@ Create the project directory with the **pipeline-proving stub** — dependency-f
     }
   }
   ```
-  Both spellings of the server name are listed on purpose — the tool is registered with different casing across environments, and a deny rule is an exact string match.
-- `.claude/skills/steward/SKILL.md` — copy of cookbook `templates/steward-SKILL.md`, verbatim. Cloud agents read this path before acting on PR events, and it is what tells them to subscribe and stop rather than arm a self check-in. The `permissions.deny` above removes the means; this file supplies the intent, so ship both.
+  Keep both spellings — the server name's casing varies by environment and deny is an exact string match.
+- `.claude/skills/steward/SKILL.md` — cookbook `templates/steward-SKILL.md`, verbatim. Cloud agents read this exact path before acting on PR events; the deny above removes the means, this supplies the intent. Ship both.
 - `docs/specs/idea.md` — the idea paragraph verbatim, plus "Bootstrap date, stub status, next step: run `/orc` for the first feature."
 - `provision.json` — see Phase 7; start it now and append as you create things.
 

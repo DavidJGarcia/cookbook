@@ -19,7 +19,7 @@ Editing a `commands/*.md` file *is* changing behavior for every session that loa
 
 Not part of the plugin: `templates/AGENTS-house-style.md` and `templates/steward-SKILL.md` (seeds `/new-project` copies — edits only affect future projects), `docs/infra-decisions.md`, and `snippets/gate-auth/` (an Express PIN gate meant to be copied into a project and adapted, not imported).
 
-`.claude/skills/steward/SKILL.md` is this repo's own copy of the steward seed. Cloud agents read that exact path before acting on PR events, so it is what keeps PR watching event-driven here; `permissions.deny` in `.claude/settings.json` is the enforcement half. Keep the two copies in sync — edit `templates/steward-SKILL.md` and copy it over, not the other way round.
+`.claude/skills/steward/SKILL.md` is this repo's copy of the steward seed — cloud agents read that exact path before acting on PR events. Keep it terse: it loads into every session, so rationale belongs in the README, not here. Edit `templates/steward-SKILL.md` and copy it over, never the reverse.
 
 ## Working here
 
