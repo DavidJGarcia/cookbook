@@ -4,9 +4,10 @@ David's public toolkit: a Claude Code plugin plus the shared patterns and docs t
 
 ## The plugin
 
-The `david-toolkit` plugin ships two commands:
+The `david-toolkit` plugin ships three commands:
 
-- **`/orc`** — grill-first development orchestrator: ideation → plan → build → verify → handoff, driven all the way to a mergeable PR.
+- **`/orc`** — grill-first development orchestrator: ideation → plan → build → verify → handoff, driven all the way to a mergeable PR. Tuned for Claude Fable 5.1.
+- **`/orc-opus`** — the same orchestrator tuned for Claude Opus 5. Opus 5 delegates too readily and over-verifies where Fable 5.1 under-narrates and needs an autonomy nudge, so the two variants differ in their delegation, review, and communication guidance and are otherwise identical.
 - **`/new-project`** — paved-road app bootstrap: takes a name and a one-paragraph idea to a private repo with a deployed pipeline-proving stub, staging/prod CI/CD, and agent-ready docs.
 
 ### Install locally
@@ -50,7 +51,7 @@ To apply this to a repo that predates the change, copy both files in from this r
 | `.claude/settings.json` | Registers the `david-cookbook` marketplace and enables `david-toolkit`, so sessions on this repo (local or web) auto-load `/orc` and `/new-project`. Also denies `send_later`, so agents can't arm scheduled PR check-ins. |
 | `.claude/skills/steward/SKILL.md` | PR-watching posture for agents on this repo: subscribe and act on events, never arm a timed check-in. Cloud agents read this path before handling PR events. Copy of `templates/steward-SKILL.md`. |
 | `.claude-plugin/marketplace.json` | The `david-cookbook` plugin marketplace manifest. |
-| `plugins/david-toolkit/` | The plugin: manifest + `commands/` (`orc.md`, `new-project.md`). |
+| `plugins/david-toolkit/` | The plugin: manifest + `commands/` (`orc.md`, `orc-opus.md`, `new-project.md`). |
 | `docs/infra-decisions.md` | How infrastructure choices get made per project — posture, criteria, heuristics. |
 | `snippets/gate-auth/` | Reusable single-shared-PIN gate (Express reference): server middleware + touch-friendly PIN pad overlay. Copied into projects, not imported. |
 | `templates/AGENTS-house-style.md` | The canonical `AGENTS.md` template new projects start from. |
