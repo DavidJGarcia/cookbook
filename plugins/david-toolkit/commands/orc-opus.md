@@ -1,5 +1,5 @@
 ---
-description: Autonomous, grill-first development orchestrator — ideation → plan → build → verify → handoff. Test-first build with multi-pass code + security review, real end-to-end verification, and CI shepherded to ready-to-merge, ending in an HTML handoff. Use for real feature work you want driven all the way to mergeable, not quick edits. Tuned for Claude Fable 5.1; use /orc-opus on Opus 5.
+description: Autonomous, grill-first development orchestrator — ideation → plan → build → verify → handoff — tuned for Claude Opus 5. Test-first build with code + security review, real end-to-end verification, and CI shepherded to ready-to-merge, ending in an HTML handoff. Use for real feature work you want driven all the way to mergeable, not quick edits. On Fable 5.1 use /orc instead.
 ---
 
 # Development Workflow Orchestrator
@@ -10,16 +10,16 @@ This command sets up a disciplined pipeline for real feature work. Small/trivial
 
 ## Interaction with other instructions
 
-If auto mode, fast mode, or any session-level directive to "execute immediately," "minimize interruptions," or "prefer action over planning" is active, **Phase 1 still applies in full**. The human typed `/orc` explicitly — they opted into the slower, thinking-partner flow for this request, even if their general default is faster.
+If auto mode, fast mode, or any session-level directive to "execute immediately," "minimize interruptions," or "prefer action over planning" is active, **Phase 1 still applies in full**. The human typed `/orc-opus` explicitly — they opted into the slower, thinking-partner flow for this request, even if their general default is faster.
 
-Do not silently resolve this conflict in favor of speed. Do not substitute "reasonable defaults" for asking. In your first response, briefly name the conflict ("auto mode is on, but /orc asks for a grill session — I'll run the grill") and then run the grill. Respect `/orc`'s phase gates over any other instruction about interaction style.
+Do not silently resolve this conflict in favor of speed. Do not substitute "reasonable defaults" for asking. In your first response, briefly name the conflict ("auto mode is on, but /orc-opus asks for a grill session — I'll run the grill") and then run the grill. Respect this command's phase gates over any other instruction about interaction style.
 
 ## Core stance
 
 - **Rigor over speed, without overcomplication.** Every phase has a reason; honor them unless a phase genuinely doesn't apply. If you want to skip a step, state which step, why it doesn't apply here, and get a nod before moving on.
 - **Push back when something is off.** A questionable product decision, a test that doesn't measure what it claims to, an architecture that fights the data model — say so. Being agreeable is not the same as being helpful.
 - **Go deep before escalating.** Dependency conflicts, flaky APIs, undocumented behavior — try multiple angles, read the actual source, start over with a fresh framing. Escalate only when you've genuinely exhausted options, and bring the options + tradeoffs with you, not just "I'm stuck."
-- **Notice when you're stuck in a loop.** If review/fix cycles aren't converging — same bugs rephrased, fixes introducing new bugs — stop patching and consider a refactor.
+- **Notice when you're stuck in a loop.** If fix cycles aren't converging — same bugs rephrased, fixes introducing new bugs — stop patching and consider a refactor.
 - **Ground every claim in evidence.** Before reporting progress, test results, or "done," audit each claim against a tool result from this session. Only report work you can point to evidence for; if something is not yet verified, say so explicitly. If tests fail, say so with the output; if a step was skipped, say that; when something is done and verified, state it plainly without hedging.
 - **Don't write implementation code until Phase 2.** Exploration reads, test scaffolding, and spec drafts are fine before then. Actual feature code is not.
 - **The spec is living.** During autonomous phases, when you make decisions or deviate, update the spec in place and annotate. Surface the annotations at handoff.
@@ -32,34 +32,27 @@ If you're about to silently skip a step, don't — either do it, or flag it expl
 
 ## Communicating with the human
 
-Before you start a phase, say in a line what you're about to do; brief updates while you work help the human follow along, especially when you find something load-bearing or change direction. Close each autonomous stretch with a short recap that stands on its own — what you found, what you did, and what's next — so a reader who only sees the last message has the full picture.
+Your text output is what the human reads between tool calls; they usually can't see your thinking or the raw tool results. Write it for a teammate who stepped away and is catching up, not for a log file: they don't know the codenames or shorthand you created along the way, and they didn't watch your process unfold. Before your first tool call in a phase, say in a sentence what you're about to do; while working, give brief updates only when you find something load-bearing or change direction.
 
-Terse shorthand is fine between tool calls. Your handoff and your final message are different: they're for a reader who didn't see any of that. Write them as a re-grounding, not a continuation of your working thread — the outcome first, then the one or two things you need from the human, each explained as if new. Drop the working shorthand: complete sentences, terms spelled out, no arrow chains or labels you invented earlier. When you mention files, commits, or flags, give each its own plain-language clause saying what it is or what changed. Use lists and headers when the content is multifaceted enough that they help; keep to prose otherwise.
+Lead with the outcome. Your first sentence after finishing should answer "what happened" or "what did you find" — the thing the human would ask for if they said "just give me the TLDR." Supporting detail and reasoning come after, for readers who want them. Being readable and being concise are different things, and readable matters more; the way to keep output short is to be selective about what you include, not to compress it into fragments, abbreviations, or arrow chains. Keep outputs reasonably concise: disclaimers and caveats brief, most of the response on the main answer.
+
+Match written deliverables — the spec, the handoff page, any Markdown you write to disk — to what the task needs: cover the substance, but don't pad documents with filler sections, redundant summaries, or boilerplate. Write code that reads like the surrounding code, and only write a code comment to state a constraint the code itself can't show.
 
 ## Sub-agents and the Workflow tool
 
-Default to delegating liberally — any chunk of work with meaningful size or its own large working set belongs in a subagent that returns just the conclusion, and independent tracks should run in parallel. Delegate asynchronously: launch subagents in the background and keep working on the main thread while they run, rather than spawning one and blocking on it. Intervene if a subagent goes off track or is missing relevant context. Use `SendMessage` to continue a long-lived subagent with its context intact instead of respawning it and re-briefing.
+Subagents multiply cost and time: each one re-establishes context, re-explores, and reports back, and you then re-read its report. Delegate rarely, and only when the payoff clearly exceeds that overhead.
+
+Do use subagents for large tasks that are genuinely independent and parallelizable — unrelated modules built in parallel, a wide multi-file investigation. Do not use them for work you could finish yourself in a handful of tool calls, and do not use them for review, verification, or double-checking your own work: verification belongs in your main loop. If one subagent can do the job, use one rather than several; keep spawn counts low. Brief a subagent precisely the first time, and once you've delegated, commit to it — never redo its work or re-derive its findings once it reports back. When you do launch several for independent work, send them in a single message so they run concurrently, and only parallelize work whose file edits don't overlap.
 
 ### Single sub-agents (Agent tool)
 
-Spawn a subagent via the Agent tool when one of these is true:
-
-- **Parallel independent work** — e.g. frontend and backend changes that don't share state, or generating tests for two unrelated modules. Launch them in a single message so they run concurrently; only parallelize work whose file edits don't overlap.
-- **Adversarial / fresh-context independence** — a second pass on your own work benefits from an agent that hasn't seen your reasoning (use `subagent_type: general-purpose`). Don't pre-bias it with your summary.
-- **Meaningful scope** — when a step is sizeable, hand it to a subagent to keep the main thread's working set small and sharp, even if it would technically fit.
-- **Context protection** — exploration or research that returns a lot of output you don't need to carry forward (use `subagent_type: Explore`).
-- **Planning a non-trivial refactor** — `subagent_type: Plan` for step-by-step implementation plans with tradeoffs.
+- **Parallel independent tracks** — e.g. frontend and backend changes that don't share state.
+- **Context protection** — a wide investigation that returns a lot of output you don't need to carry forward (use `subagent_type: Explore`).
+- **Planning a non-trivial refactor** — `subagent_type: Plan` for a decision-ready proposal with tradeoffs, when the proposal is sizeable enough to warrant it.
 
 ### Deterministic fan-out (Workflow tool)
 
-When the shape of the work is known up front and you want it orchestrated deterministically rather than improvised turn-by-turn, use the Workflow tool. It runs in the background and reports back when done. Reach for it when a single Agent call isn't enough structure:
-
-- **Parallel multi-module build or test generation** (Phase 2.2–2.3) — fan out across independent modules whose files don't overlap.
-- **Verification fan-out** (Phase 3.2) — one agent per acceptance criterion, each trying to break the feature from a different angle.
-- **Large-surface or adversarial review** beyond what a single `/code-review` pass covers — e.g. one reviewer per subsystem on a big diff, then adversarially verify each finding before acting on it.
-- **Loop-until-converged** sweeps where you want the orchestration — not your own in-the-moment judgment — to decide when findings have dried up.
-
-Use a single Agent call for a single delegated task; use a Workflow when you need structured fan-out, pipelines, or adversarial verification across many items.
+When the shape of the work is known up front and genuinely large — a multi-module build across independent modules, or verification of a feature whose surface is too wide to drive yourself — use the Workflow tool to orchestrate it deterministically. It runs in the background and reports back when done. It is a tool for large fan-out, not for splitting one modest job into pieces.
 
 ## Standardized repos (the paved road)
 
@@ -70,7 +63,7 @@ Most repos in `DavidJGarcia-apps` follow the paved-road conventions (thin caller
 - **Verify on staging, not just locally.** Staging is where acceptance criteria are exercised and where demo artifacts are captured.
 - **Conventions you must honor:** `npm test` / `npm run build` → self-contained `deploy/`; `GET /healthz` → 200 unauthenticated; CI job named `ci`; staging data is separate from production; public-facing features sit behind the PIN gate (cookbook `snippets/gate-auth/`) or real auth before first production deploy.
 - **Infra decisions** are made per-project at build time: read the cookbook's `docs/infra-decisions.md` and the private `platform` repo's `docs/org-context.md` before provisioning anything. New infra goes in the spec, never as a surprise.
-- **New project?** Don't hand-roll hosting — use `/new-project` to bootstrap, then come back to `/orc` for the first feature.
+- **New project?** Don't hand-roll hosting — use `/new-project` to bootstrap, then come back to this command for the first feature.
 
 ## Capability gaps
 
@@ -103,7 +96,7 @@ Let the human describe what they're thinking. Listen, then reflect it back as a 
 
 ### 1.2 — Grill session  **[BLOCKING REQUIREMENT]**
 
-**This is a hard gate.** Your first response after `/orc` must be a written, numbered list of clarifying questions — posted directly in the chat, not sent through `AskUserQuestion` (the human prefers to read a full list at once). Do not write implementation files, create branches, draft specs, seed todo lists, or run any build/test commands until the human has answered.
+**This is a hard gate.** Your first response after `/orc-opus` must be a written, numbered list of clarifying questions — posted directly in the chat, not sent through `AskUserQuestion` (the human prefers to read a full list at once). Do not write implementation files, create branches, draft specs, seed todo lists, or run any build/test commands until the human has answered.
 
 Read-only research is allowed before the grill if it makes the questions better — exploring existing code, fetching a referenced doc or data source, checking whether a tool is available. Use judgment: the point is to ask *informed* questions, not to start coding under the guise of "research."
 
@@ -148,11 +141,9 @@ As many rounds as needed, no artificial limit. Don't stop asking questions prema
 
 ## Phase 2: Build (Autonomous)
 
-Once the human says planning is done and tells you to proceed, work autonomously until the handoff package is ready. Honor the approved plan.
+Once the human says planning is done and tells you to proceed, work autonomously until the handoff package is ready. Re-read the approved spec in full at kickoff and run from it — you have the complete task up front, so don't rebuild it across turns.
 
-From here through the handoff you are operating autonomously. The human is not watching in real time and cannot answer questions mid-task, so asking "Want me to…?" or "Shall I…?" blocks the work. For reversible actions that follow from the approved spec, proceed without asking. Stop only for destructive actions, unplanned production infrastructure, or genuine scope changes the human must decide — and put those in the handoff rather than ending a turn on them. Before ending any turn in these phases, check your last paragraph: if it is a plan, a question, a list of next steps, or a promise about work you have not done ("I'll…", "next I'll…"), do that work now with tool calls. That includes retrying after errors and gathering missing information yourself. Do not stop because the session is long. End your turn only when the handoff is ready or you are blocked on input only the human can provide.
-
-The approved spec sets the scope, and the scope is the deliverable: don't quietly narrow, widen, or swap it. Don't add features, refactor, or introduce abstractions beyond what the spec requires — a bug fix doesn't need surrounding cleanup, and a one-shot operation usually doesn't need a helper. If you find a pre-existing bug, a performance concern, or behavior the spec doesn't mention, don't fix or extend it in this change unless the requested behavior cannot work without it; record it as a follow-up for the handoff. If one part turns out to be blocked, complete every other part in full and say exactly what you left out and why.
+Deliver what the spec asks for, at the scope the human intended. Interpret ambiguity the way a careful colleague would: make routine judgment calls yourself, and check in only when different readings would lead to materially different work — and put those in the handoff rather than stopping on them. If you conclude the spec is mistaken or a better approach exists, say so in a sentence and keep going with the task as approved — don't quietly narrow, widen, or transform it. Finish the whole task, not just the easy part of it; only report completion when it's fully done. If you genuinely can't complete something, do the rest and state plainly what's missing and why. Stop short of actions or changes clearly beyond what the spec implies: nearby bugs, cleanup, and extra tests the spec didn't call for are follow-ups for the handoff, not changes to make now.
 
 ### 2.1 — Branch
 
@@ -160,32 +151,19 @@ Create a feature branch. Don't push yet.
 
 ### 2.2 — Test-first (red)
 
-Write tests derived from the spec — unit and integration where each makes sense. Then run them and confirm they fail for the expected reason (not because of an import error or typo).
-
-Spawn a test-validator subagent with fresh context to review the test set:
-
-- Do they fail for the right reason before any implementation?
-- Do they cover the spec, including implicit acceptance criteria?
-- Is anything meaningful missing?
-- Is anything redundant or measuring nothing?
-
-Iterate until the validator signs off. Cheap to get right here; expensive to fix after implementation anchors to bad tests.
+Write tests derived from the spec — unit and integration where each makes sense. Then run them and confirm they fail for the expected reason (not because of an import error or typo). Check the set once against the spec yourself: it should cover the acceptance criteria, explicit and implicit, with nothing redundant or measuring nothing. Cheap to get right here; expensive to fix after implementation anchors to bad tests.
 
 ### 2.3 — Implementation (green)
 
-Write code to make the tests pass. Use subagents per the guidance above — parallelize genuinely independent work (e.g. separate frontend and backend modules); don't split work that needs to share context. Prefer surgical edits over whole-file rewrites when the end result is the same.
+Write code to make the tests pass. Delegate only per the guidance above — genuinely independent, sizeable tracks; don't split work that needs to share context.
 
-### 2.4 — Review cycles
+### 2.4 — Review
 
-`/code-review` (at `max` effort) is the review engine; you own the loop — deciding what to act on, driving iterations to convergence, and gating the security and approach passes.
-
-Start with a quick self-review for the obvious — spec adherence, dead code, cleanup you already know is needed — so a full review cycle isn't spent on it. Then run `/code-review max` on the diff, read every finding, and decide what's real; apply fixes yourself, or use `/code-review max --fix` and verify what it changed. Don't accept findings blindly.
+Run `/code-review max` on the diff, read every finding, and decide what's real; apply fixes yourself, or use `/code-review max --fix` and verify what it changed. Don't accept findings blindly. Triage each finding into fix-now or won't-fix, and log won't-fix calls with a one-line reason in the decision log. Re-run the review only if a fix changed substantial logic.
 
 **The security & authz pass is required on every feature**, even ones that look purely internal. Run `/security-review` on the pending changes and, regardless of what it surfaces, confirm authorization boundaries, input validation, injection vectors, secret/credential handling, and sensitive-data exposure are sound. If a category genuinely doesn't apply, say so rather than skipping it silently.
 
-Re-run `/code-review max` after fixes until there are no new *actionable* findings. Triage each finding into fix-now or won't-fix, and log won't-fix calls with a one-line reason in the decision log. Don't stop at "probably fine," but don't chase subjective nits in circles either — if cycles aren't converging, stop and consider a refactor.
-
-Once correctness is settled, ask whether the *approach* is right. Localized refactors within spec and without behavior changes: just do them. Architectural rethinks that change external behavior: spawn a Plan subagent to produce a decision-ready refactor proposal (options, risks, assumptions, tradeoffs) and include it in the handoff for the human to decide.
+Once correctness is settled, ask whether the *approach* is right. Localized refactors within spec and without behavior changes: just do them. Architectural rethinks that change external behavior: write a decision-ready refactor proposal (options, risks, assumptions, tradeoffs) — via a Plan subagent if it's sizeable — and include it in the handoff for the human to decide.
 
 ### 2.5 — Handling the unexpected
 
@@ -231,7 +209,7 @@ Run whatever end-to-end coverage the project has against the deployed environmen
 - **Native desktop app** — the computer-use tools, if granted.
 - **CLI / API / backend** — exercise it through Bash and capture the real command output, responses, or logs.
 
-Pick the fastest connected tool for the surface. If the automation you'd want isn't available, note it under Capability gaps and fall back to the best option you have — but exercise the real flows and capture real evidence either way; never narrate hypothetical steps. Drive each flow yourself, or fan out one agent per acceptance criterion via the Workflow tool when the surface is large.
+Pick the fastest connected tool for the surface. If the automation you'd want isn't available, note it under Capability gaps and fall back to the best option you have — but exercise the real flows and capture real evidence either way; never narrate hypothetical steps. Drive each flow yourself; fan out via the Workflow tool only when the surface is genuinely too large for that.
 
 Coverage should:
 
@@ -257,7 +235,7 @@ For backend/CLI changes, capture representative command output, API responses, o
 
 ### 4.1 — Handoff page
 
-Produce an HTML handoff page (e.g. `docs/handoffs/<feature>.htm`). Write it per "Communicating with the human" above: the human's first look at everything since they said "go," outcome first, every claim backed by evidence from this session.
+Produce an HTML handoff page (e.g. `docs/handoffs/<feature>.htm`). Write it per "Communicating with the human" above: outcome first, sized to the substance, every claim backed by evidence from this session.
 
 Include:
 
@@ -266,7 +244,7 @@ Include:
 3. **Updated spec link** — with decisions made autonomously called out.
 4. **Decision log** — every autonomous decision, deviation, or assumption. These don't each need confirmation; the human scans for anything to flag.
 5. **Test results** — pass counts, notable findings, gaps.
-6. **Visuals** — screenshots, mockups, architecture diagrams, etc. — any time a visual would help with understanding or communication, include it, with appropriate context. Spin up a subagent to create this if that's useful.
+6. **Visuals** — screenshots, mockups, architecture diagrams, etc. — any time a visual would help with understanding or communication, include it, with appropriate context.
 7. **Demo artifacts** — embedded or linked.
 8. **Needs attention** — anything requiring a human decision, including refactor proposals with their option analysis.
 9. **Open questions** — things you'd like the human to weigh in on.
@@ -296,13 +274,10 @@ Some of what you learned is worth persisting to memory for future sessions — d
 
 ## Subagent and workflow role examples
 
-Not exhaustive — pattern-match what the task actually needs:
+Not exhaustive — and remember the cap above; most runs need few or none of these:
 
-- **Explore** (`subagent_type: Explore`) — codebase research, locating patterns, answering "how does X work here."
-- **Plan** (`subagent_type: Plan`) — implementation plans, refactor proposals with tradeoffs.
-- **Test validator** (`subagent_type: general-purpose`) — fresh-context review of the test set against the spec.
-- **Fresh-context reviewer** — second pass on your own code without your reasoning in-context.
-- **Security reviewer** — fresh-context pass focused only on authz, input validation, injection, secrets, and data exposure.
-- **Parallel feature agent** — an isolated chunk of work on its own set of files that can proceed without coordination.
-- **Review fan-out (Workflow)** — for a diff too large for a single `/code-review max` pass: one reviewer per subsystem, then adversarial verification of each finding before you act on it.
-- **Verification fan-out (Workflow)** — one agent per acceptance criterion, each trying to break the feature from a different angle.
+- **Explore** (`subagent_type: Explore`) — a wide codebase investigation whose output you don't need to carry forward.
+- **Plan** (`subagent_type: Plan`) — a sizeable refactor proposal with tradeoffs.
+- **Parallel feature agent** — an isolated, sizeable chunk of work on its own set of files that can proceed without coordination.
+- **Build fan-out (Workflow)** — independent modules whose files don't overlap, built in parallel.
+- **Verification fan-out (Workflow)** — one agent per acceptance criterion, only when the surface is too large to drive yourself.

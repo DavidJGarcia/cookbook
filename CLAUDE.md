@@ -14,7 +14,8 @@ Three files wire the toolkit to auto-load in any consuming repo:
 
 Editing a `commands/*.md` file *is* changing behavior for every session that loads the plugin — but only after it's pushed, since the marketplace is fetched from GitHub.
 
-- `commands/orc.md` — grill-first dev orchestrator (ideation → plan → build → verify → handoff), driven to a mergeable PR.
+- `commands/orc.md` — grill-first dev orchestrator (ideation → plan → build → verify → handoff), driven to a mergeable PR. Tuned for Claude Fable 5.1.
+- `commands/orc-opus.md` — the same orchestrator tuned for Claude Opus 5 (`/orc-opus`). The two share a body verbatim and differ only in the delegation, verification, communication, and Phase 2 scope sections — when you edit a shared section, edit both.
 - `commands/new-project.md` — paved-road app bootstrap (GitHub repo + Azure staging/prod + OIDC + rulesets). Relies on the private `DavidJGarcia-apps/platform` repo for org-specifics; when its inline steps and `platform/README.md` disagree, the README wins.
 
 Not part of the plugin: `templates/AGENTS-house-style.md` and `templates/steward-SKILL.md` (seeds `/new-project` copies — edits only affect future projects), `docs/infra-decisions.md`, and `snippets/gate-auth/` (an Express PIN gate meant to be copied into a project and adapted, not imported).
