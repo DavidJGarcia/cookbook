@@ -42,14 +42,22 @@ The trade: webhook delivery isn't guaranteed, so a PR that goes red between even
 
 The agent-facing copies (the skill, the `/orc` step, the AGENTS bullet) are deliberately terse — they're loaded into every session, so the reasoning lives here instead of in their context window.
 
-To apply this to a repo that predates the change, copy both files in from this repo.
+To apply this to a repo that predates the change, copy both files in from this repo. The same goes for the next section's rules: copy the updated steward skill and the AGENTS bullet.
+
+## Converge before you push
+
+Every push to a PR reruns CI and redeploys staging, and on repos with the paved-road ruleset (`review_on_push: true`) it also buys a full Copilot review, which bills Actions minutes and AI credits. Measured on one app repo over seven weeks, 80% of PR Actions minutes came from pushes made after the PR was open: 63% responding to a Copilot review one fix at a time, 17% from the agent finding more on its own. Copilot's first review found something on 72% of PRs, which suggests the in-session review had not converged before the PR went up.
+
+So agents review the whole diff to convergence and pass every CI check that can run locally before each push, and answer each round of findings with one push. PRs open as drafts: on paved-road repos drafts deploy to staging but Copilot skips them (`review_draft_pull_requests: false`), so Copilot first reviews a version already validated on staging.
+
+There is deliberately no cap on rounds. Every real finding is fixed whenever it arrives; repeated rounds are a signal to split the PR or rethink the approach, not a reason to stop fixing. Large PRs drew far more rounds (over 3,000 changed lines: about 10 Copilot reviews each; under 300: about 3).
 
 ## Repo map
 
 | Path | What it is |
 |---|---|
 | `.claude/settings.json` | Registers the `david-cookbook` marketplace and enables `david-toolkit`, so sessions on this repo (local or web) auto-load `/orc` and `/new-project`. Also denies `send_later`, so agents can't arm scheduled PR check-ins. |
-| `.claude/skills/steward/SKILL.md` | PR-watching posture for agents on this repo: subscribe and act on events, never arm a timed check-in. Cloud agents read this path before handling PR events. Copy of `templates/steward-SKILL.md`. |
+| `.claude/skills/steward/SKILL.md` | PR posture for agents on this repo: push only converged updates, subscribe and act on events, never arm a timed check-in. Cloud agents read this path before handling PR events. Copy of `templates/steward-SKILL.md`. |
 | `.claude-plugin/marketplace.json` | The `david-cookbook` plugin marketplace manifest. |
 | `plugins/david-toolkit/` | The plugin: manifest + `commands/` (`orc.md`, `orc-opus.md`, `new-project.md`). |
 | `docs/infra-decisions.md` | How infrastructure choices get made per project — posture, criteria, heuristics. |

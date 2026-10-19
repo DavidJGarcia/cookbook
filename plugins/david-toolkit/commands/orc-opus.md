@@ -42,7 +42,7 @@ Match written deliverables — the spec, the handoff page, any Markdown you writ
 
 Subagents multiply cost and time: each one re-establishes context, re-explores, and reports back, and you then re-read its report. Delegate rarely, and only when the payoff clearly exceeds that overhead.
 
-Do use subagents for large tasks that are genuinely independent and parallelizable — unrelated modules built in parallel, a wide multi-file investigation. Do not use them for work you could finish yourself in a handful of tool calls, and do not use them for review, verification, or double-checking your own work: verification belongs in your main loop. If one subagent can do the job, use one rather than several; keep spawn counts low. Brief a subagent precisely the first time, and once you've delegated, commit to it — never redo its work or re-derive its findings once it reports back. When you do launch several for independent work, send them in a single message so they run concurrently, and only parallelize work whose file edits don't overlap.
+Do use subagents for large tasks that are genuinely independent and parallelizable — unrelated modules built in parallel, a wide multi-file investigation. Do not use them for work you could finish yourself in a handful of tool calls, and do not use them for review, verification, or double-checking your own work: verification belongs in your main loop. The one exception is the fresh-context review pass in §2.4. If one subagent can do the job, use one rather than several; keep spawn counts low. Brief a subagent precisely the first time, and once you've delegated, commit to it — never redo its work or re-derive its findings once it reports back. When you do launch several for independent work, send them in a single message so they run concurrently, and only parallelize work whose file edits don't overlap.
 
 ### Single sub-agents (Agent tool)
 
@@ -159,11 +159,13 @@ Write code to make the tests pass. Delegate only per the guidance above — genu
 
 ### 2.4 — Review
 
-Run `/code-review max` on the diff, read every finding, and decide what's real; apply fixes yourself, or use `/code-review max --fix` and verify what it changed. Don't accept findings blindly. Triage each finding into fix-now or won't-fix, and log won't-fix calls with a one-line reason in the decision log. Re-run the review only if a fix changed substantial logic.
+Run `/code-review max` on the diff, read every finding, and decide what's real; apply fixes yourself, or use `/code-review max --fix` and verify what it changed. Don't accept findings blindly. Triage each finding into fix-now or won't-fix, and log won't-fix calls with a one-line reason in the decision log.
 
 **The security & authz pass is required on every feature**, even ones that look purely internal. Run `/security-review` on the pending changes and, regardless of what it surfaces, confirm authorization boundaries, input validation, injection vectors, secret/credential handling, and sensitive-data exposure are sound. If a category genuinely doesn't apply, say so rather than skipping it silently.
 
 Once correctness is settled, ask whether the *approach* is right. Localized refactors within spec and without behavior changes: just do them. Architectural rethinks that change external behavior: write a decision-ready refactor proposal (options, risks, assumptions, tradeoffs) — via a Plan subagent if it's sizeable — and include it in the handoff for the human to decide.
+
+**Converge before anything is pushed.** After the security pass and any refactor, re-run `/code-review max` on the **whole diff**, not just the fixes, until a pass turns up nothing actionable. Make the last pass a fresh-context reviewer (a subagent that didn't build the change), because the author's context hides what an outside reviewer finds; if it finds anything actionable, fix it and repeat with a new fresh-context reviewer. Nothing is pushed until this converges (§3.1). If passes keep finding new problems, step back and reconsider the approach yourself; put any architectural proposal in the handoff.
 
 ### 2.5 — Handling the unexpected
 
@@ -185,21 +187,30 @@ Gate each step on whether the relevant infrastructure exists. If the project has
 
 ### 3.1 — PR and CI: shepherd to ready-to-merge
 
-Cut a PR, then drive it all the way to mergeable — don't just fire off CI and walk away. Treat the steps below as a follow-up loop that re-engages on every PR create or update: each push restarts watch → fix → confirm until the PR is genuinely mergeable.
+Cut the PR as a **draft**, verify it on staging, then mark it ready for review, and drive it all the way to mergeable; don't fire off CI and walk away. On standardized repos Copilot skips drafts (`review_draft_pull_requests: false`) and reviews every push once the PR is ready (`review_on_push: true`), and every push redeploys staging. So each push costs a CI run, a staging deploy and, once ready, a full Copilot review.
 
-1. **Watch CI without blocking.** Kick the watch off in the background rather than polling in the foreground:
+**Push only converged updates.** Before the first push and before every later one, the whole diff has been through §2.4 to convergence and every CI check that can run locally (unit, integration or emulator, E2E, lint, typecheck) passes locally; name any that can't in the PR description. CI confirms; it shouldn't be where you discover failures. One round of fixes is one push, never one push per fix.
+
+1. **Open as a draft and watch CI without blocking.** Kick the watch off in the background rather than polling in the foreground:
    - For a single "CI finished" signal, use Bash `run_in_background` with a command that exits when the run resolves (e.g. `gh pr checks <pr> --watch`); you'll be re-invoked when it exits.
    - To see each check land as it happens, use the `Monitor` tool with a poll loop over `gh pr checks`. Either way, match **every** terminal state — success *and* failure — so a red build can't masquerade as "still running."
-2. **Fix and re-push on red.** When a check fails, pull the failing logs (`gh run view --log-failed`), fix the actual cause, push, and watch again. Loop until green. Don't hand off on a red build, and don't paper over a flaky failure without understanding it.
-3. **Triage every review comment — automatically, on every push.** Standardized repos auto-request a Copilot review on PR creation and re-review on each push; humans may comment too. After CI settles on each push, fetch the PR's reviews and inline comments (`gh api repos/<o>/<r>/pulls/<n>/reviews` and `.../comments`) and handle every one: **fix it** and push (which restarts this loop), or **reply with a one-line reason** why not and resolve the thread (GraphQL `resolveReviewThread`). Triage like any other review finding — don't blindly apply suggestions, and never leave a comment silently unaddressed: zero open review threads is part of the ready-to-merge bar. Log won't-fix calls in the decision log.
-4. **Confirm actually-mergeable.** Green checks aren't the whole bar: verify the branch is current with its base, there are no conflicts, no unresolved review threads remain, and any required reviews/approvals or branch-protection gates are satisfied. Surface anything only a human can clear (required human approval, protected-branch overrides) in the handoff.
-5. **Staging deploy.** If there's a staging deploy, confirm it completed and the change is actually live, then verify against it. Staging — not your local box — is where the feature's real behavior should be exercised and completed (e.g. the actual CRUD operations against staging data) and where the handoff's demonstrated flows should be captured, since it's the closest thing to production.
+2. **Verify on staging while it's a draft.** Confirm the deploy completed and the change is actually live (on paved-road repos, the sticky comment's SHA matches your push), then run §3.2 against it. Staging — not your local box — is where the feature's real behavior should be exercised and completed (e.g. the actual CRUD operations against staging data) and where the handoff's demonstrated flows should be captured, since it's the closest thing to production. Anything it turns up goes through step 4, then verify again on the new deploy. If there's no staging, run §3.2 locally and go to step 3. If the repo's staging workflow skips drafts, mark the PR ready, verify on staging before acting on Copilot's first review, and fold both into one round.
+3. **Mark it ready** (`gh pr ready <n>`) once CI is green and staging verification passes. That starts Copilot's first review, of a version you have already reviewed and validated. Where Copilot review is available but not auto-requested, request it now and after each later update.
+4. **When something real turns up** (a red check, a staging failure, a Copilot finding, a human comment):
+   - A round ends when CI has resolved, staging is verified, and (once ready, where Copilot reviews) Copilot's review of that push has posted. Wait for all of them, by event, before pushing, unless a red check blocks verifying anything else. If Copilot's review still hasn't posted once CI and staging have resolved and no event is pending, say so in the handoff rather than holding the push. Then fetch the PR's reviews and inline comments (`gh api repos/<o>/<r>/pulls/<n>/reviews` and `.../comments`) so nothing is missed, and handle every one.
+   - Fix every finding that should be fixed, whatever round it arrives in. Decline only on the merits: reply with a one-line reason and resolve the thread (GraphQL `resolveReviewThread`). Don't blindly apply suggestions, never let a finding go unfixed because of how many rounds there have been, and never leave a comment silently unaddressed: zero open review threads is part of the ready-to-merge bar. Log won't-fix calls in the decision log.
+   - For a red check, pull the failing logs (`gh run view --log-failed`), reproduce locally, and fix the actual cause. Don't hand off on a red build, and don't paper over a flaky failure without understanding it.
+   - Treat each finding as a miss by your own review. Name its class (a comment left stale by a behavior change, unvalidated input at a boundary, a doc claim the code no longer matches), sweep the whole diff for other instances, and fix those too.
+   - Collect everything outstanding from the round (every comment, CI, staging) and address it together. Then run §2.4 to convergence on the whole diff again, since fixes introduce defects, and pass every local check.
+   - Push once. That push reruns CI, redeploys staging and, once the PR is ready, has Copilot review again, which is expected. Verify on staging again.
+5. **Repeated rounds are a signal, not a limit.** If converged updates keep drawing new real findings, step back before the next push. Is the PR too large to review well? Propose splitting it into PRs that merge on their own. Is the approach wrong, with findings clustering in one mechanism that patching isn't fixing? Write a simpler-design proposal. Is your review blind to a whole class? Propose adding it to the repo's review guidance (`AGENTS.md` or `CLAUDE.md`) as a follow-up. Put proposals that change scope in the handoff for the human. Note the conclusion in one PR comment. This changes the approach; it never stops the fixing.
+6. **Confirm actually-mergeable.** Green checks aren't the whole bar: verify the branch merges cleanly with its base, no unresolved review threads remain, and any required reviews/approvals or branch-protection gates are satisfied. Merge the base in only when it conflicts, branch protection requires an up-to-date branch, or the change needs testing against the current base; never just to keep an idle PR current, and make the merge plus any rework one converged update. Surface anything only a human can clear (required human approval, protected-branch overrides) in the handoff.
 
 **Watch by event, never by timer.** Within a turn, use the background watch above. Across turns, subscribe to PR activity and end the turn — that *is* how you wait. Never arm a scheduled check-in to re-poll the PR (`send_later`, `create_trigger`, `/loop`, foreground `sleep`); if events dry up, say so in the handoff. Full posture: `.claude/skills/steward/SKILL.md`.
 
 Getting to *ready-to-merge* is the goal — do **not** merge yourself; the human owns that call.
 
-If there's no CI/staging, run the full test suite locally and the app's smoke checks, and note this in the handoff.
+If there's no CI, no staging, or neither, run what's missing locally (the full test suite, the app's smoke checks), mark the PR ready once that passes, and note this in the handoff.
 
 ### 3.2 — Integration / E2E / UI testing
 
@@ -235,7 +246,7 @@ For backend/CLI changes, capture representative command output, API responses, o
 
 ### 4.1 — Handoff page
 
-Produce an HTML handoff page (e.g. `docs/handoffs/<feature>.htm`). Write it per "Communicating with the human" above: outcome first, sized to the substance, every claim backed by evidence from this session.
+Produce an HTML handoff page and deliver it outside the repo (an artifact or the chat), not as a commit: a commit on a ready PR is another push, staging deploy and Copilot review. Spec and decision-log updates ride in the last converged round before marking ready, or in the next round's push. Write it per "Communicating with the human" above: outcome first, sized to the substance, every claim backed by evidence from this session.
 
 Include:
 
@@ -258,7 +269,7 @@ Present the handoff and ask whether anything needs revisiting. Iterate until con
 
 ### 4.3 — Memory update (proposed, never automatic)
 
-Some of what you learned is worth persisting to memory for future sessions — durable project constraints, architectural decisions and their rationale, conventions you discovered, gotchas that bit you. Memory is the only thing that leaves the project: the handoff doc and spec stay in the repo; memory holds the small set of durable facts worth recalling in a later session.
+Some of what you learned is worth persisting to memory for future sessions — durable project constraints, architectural decisions and their rationale, conventions you discovered, gotchas that bit you. Memory is the only thing that persists across sessions: the spec stays in the repo and the handoff is delivered with the PR; memory holds the small set of durable facts worth recalling in a later session.
 
 **This step is gated.** Draft the proposed entries — show the human the exact text and which file each would go to — and get explicit approval before writing anything. Never write to memory unprompted, and never treat a decision as memory-worthy without the human validating it first. If they decline, drop it. Record corrections and confirmed approaches alike, including why they mattered; don't propose what the repo or chat history already records, and prefer updating an existing note over creating a duplicate.
 
