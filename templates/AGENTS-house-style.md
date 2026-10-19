@@ -12,6 +12,7 @@
 - Verify changes on the **staging deployment**, not just locally. "Works on my machine" is not done; "verified on staging" is.
 - **Never merge PRs.** The human merges.
 - **Watch PRs by event, never by timer.** Subscribe, then end the turn — events wake the session. Never arm a scheduled check-in to re-poll a PR. Full posture: `.claude/skills/steward/SKILL.md`.
+- **Push only converged updates.** Review the whole diff to convergence and pass every CI check that can run locally before each push; one push per round of findings. Open PRs as drafts, verify on staging, then mark ready for Copilot's review.
 - **Never deploy manually.** Staging deploys automatically on PR open/update; production deploys automatically on merge to `main`.
 
 ## Conventions
