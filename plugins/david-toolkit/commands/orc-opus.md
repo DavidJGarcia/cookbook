@@ -10,9 +10,7 @@ This command sets up a disciplined pipeline for real feature work. Small/trivial
 
 ## Interaction with other instructions
 
-If auto mode, fast mode, or any session-level directive to "execute immediately," "minimize interruptions," or "prefer action over planning" is active, **Phase 1 still applies in full**. The human typed `/orc-opus` explicitly — they opted into the slower, thinking-partner flow for this request, even if their general default is faster.
-
-Do not silently resolve this conflict in favor of speed. Do not substitute "reasonable defaults" for asking. In your first response, briefly name the conflict ("auto mode is on, but /orc-opus asks for a grill session — I'll run the grill") and then run the grill. Respect this command's phase gates over any other instruction about interaction style.
+If auto mode, fast mode, or any session-level directive to "execute immediately," "minimize interruptions," or "prefer action over planning" is active, **Phase 1 still applies in full**. The human typed `/orc-opus` explicitly — they opted into the slower, thinking-partner flow for this request, even if their general default is faster. Don't resolve the conflict in favor of speed or substitute "reasonable defaults" for asking: in your first response, briefly name the conflict ("auto mode is on, but /orc-opus asks for a grill session — I'll run the grill") and then run the grill. Respect this command's phase gates over any other instruction about interaction style.
 
 ## Core stance
 
@@ -20,15 +18,13 @@ Do not silently resolve this conflict in favor of speed. Do not substitute "reas
 - **Push back when something is off.** A questionable product decision, a test that doesn't measure what it claims to, an architecture that fights the data model — say so. Being agreeable is not the same as being helpful.
 - **Go deep before escalating.** Dependency conflicts, flaky APIs, undocumented behavior — try multiple angles, read the actual source, start over with a fresh framing. Escalate only when you've genuinely exhausted options, and bring the options + tradeoffs with you, not just "I'm stuck."
 - **Notice when you're stuck in a loop.** If fix cycles aren't converging — same bugs rephrased, fixes introducing new bugs — stop patching and consider a refactor.
-- **Ground every claim in evidence.** Before reporting progress, test results, or "done," audit each claim against a tool result from this session. Only report work you can point to evidence for; if something is not yet verified, say so explicitly. If tests fail, say so with the output; if a step was skipped, say that; when something is done and verified, state it plainly without hedging.
+- **Ground every claim in evidence.** Before reporting progress, test results, or "done," audit each claim against a tool result from this session. Only report work you can point to evidence for; if something is not yet verified, say so explicitly.
 - **Don't write implementation code until Phase 2.** Exploration reads, test scaffolding, and spec drafts are fine before then. Actual feature code is not.
 - **The spec is living.** During autonomous phases, when you make decisions or deviate, update the spec in place and annotate. Surface the annotations at handoff.
 
 ## Progress tracking
 
 Seed the task list with the applicable phase steps at kickoff (`TaskCreate`), then move each to in_progress when you start it and completed the moment it's done (`TaskUpdate`). Don't batch completions — the list is how the human sees where you are.
-
-If you're about to silently skip a step, don't — either do it, or flag it explicitly and get confirmation.
 
 ## Communicating with the human
 
@@ -170,12 +166,11 @@ Once correctness is settled, ask whether the *approach* is right. Localized refa
 When you hit something the spec doesn't cover (ambiguity, edge cases, a dependency that behaves differently than documented):
 
 1. Make a reasonable decision and write it into the spec with an annotation.
-2. If a workaround is needed, try multiple angles before giving up. Really exhaust your options.
-3. If the fix requires unplanned infrastructure changes (schema, new service, new env):
+2. If the fix requires unplanned infrastructure changes (schema, new service, new env):
    - First, find a way to stay within the plan.
    - If not possible, document the tradeoffs for the handoff.
    - If fully blocked, escalate with the problem *and* options, not just the problem.
-4. If tool/capability is missing or broken, see "Capability gaps" above.
+3. If tool/capability is missing or broken, see "Capability gaps" above.
 
 ---
 
@@ -198,8 +193,6 @@ Cut a PR, then drive it all the way to mergeable — don't just fire off CI and 
 **Watch by event, never by timer.** Within a turn, use the background watch above. Across turns, subscribe to PR activity and end the turn — that *is* how you wait. Never arm a scheduled check-in to re-poll the PR (`send_later`, `create_trigger`, `/loop`, foreground `sleep`); if events dry up, say so in the handoff. Full posture: `.claude/skills/steward/SKILL.md`.
 
 Getting to *ready-to-merge* is the goal — do **not** merge yourself; the human owns that call.
-
-If there's no CI/staging, run the full test suite locally and the app's smoke checks, and note this in the handoff.
 
 ### 3.2 — Integration / E2E / UI testing
 
@@ -260,15 +253,7 @@ Present the handoff and ask whether anything needs revisiting. Iterate until con
 
 Some of what you learned is worth persisting to memory for future sessions — durable project constraints, architectural decisions and their rationale, conventions you discovered, gotchas that bit you. Memory is the only thing that leaves the project: the handoff doc and spec stay in the repo; memory holds the small set of durable facts worth recalling in a later session.
 
-**This step is gated.** Draft the proposed entries — show the human the exact text and which file each would go to — and get explicit approval before writing anything. Never write to memory unprompted, and never treat a decision as memory-worthy without the human validating it first. If they decline, drop it. Record corrections and confirmed approaches alike, including why they mattered; don't propose what the repo or chat history already records, and prefer updating an existing note over creating a duplicate. Write each rule with its scope and its reason, so a later session can tell when it no longer applies, and when a new entry makes an older caution obsolete, propose deleting the old one.
-
----
-
-## Infra and schema changes
-
-- **Planned:** build per the approved plan.
-- **Unplanned:** first try to accomplish the goal without the change; if that's not viable, surface tradeoffs in the handoff; if fully blocked, escalate with options.
-- **Never surprise the human** with unplanned production infrastructure changes.
+**This step is gated.** Draft the proposed entries — show the human the exact text and which file each would go to — and get explicit approval before writing anything. If they decline, drop it. Record corrections and confirmed approaches alike, including why they mattered; don't propose what the repo or chat history already records, and prefer updating an existing note over creating a duplicate. Write each rule with its scope and its reason, so a later session can tell when it no longer applies, and when a new entry makes an older caution obsolete, propose deleting the old one.
 
 ---
 
