@@ -7,7 +7,7 @@ David's public toolkit: a Claude Code plugin plus the shared patterns and docs t
 The `david-toolkit` plugin ships three commands:
 
 - **`/orc`** — grill-first development orchestrator: ideation → plan → build → verify → handoff, driven all the way to a mergeable PR. Tuned for Claude Fable 5.2.
-- **`/orc-opus`** — the same orchestrator tuned for Claude Opus 5. Opus 5 delegates too readily and over-verifies. Fable 5.2 follows the prompt's lead on delegation, can stop long tasks early, and writes dense reports unless asked otherwise, so `/orc` frames subagents by cost, names which steps need no approval, and asks for plain-language handoffs (per Anthropic's "Prompting Claude Fable 5.2" guide). Run `/orc` at `high` effort: lower levels make Fable 5.2 more likely to stop early, and above `high` gains are uneven. The two variants differ in their delegation, review, and communication guidance and are otherwise identical.
+- **`/orc-opus`** — the same orchestrator tuned for Claude Opus 5. Opus 5 delegates too readily and over-verifies. Fable 5.2 follows the prompt's lead on delegation, can stop long tasks early, and writes dense reports unless asked otherwise, so `/orc` no longer pushes delegation, names which steps need no approval, and asks for self-contained handoffs (per Anthropic's "Prompting Claude Fable 5.2" guide). Run `/orc` at `high` effort: lower levels make Fable 5.2 more likely to stop early, and above `high` gains are uneven. The two variants differ in their delegation, review, and communication guidance and are otherwise identical.
 - **`/new-project`** — paved-road app bootstrap: takes a name and a one-paragraph idea to a private repo with a deployed pipeline-proving stub, staging/prod CI/CD, and agent-ready docs.
 
 ### Install locally

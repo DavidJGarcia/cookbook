@@ -34,15 +34,11 @@ If you're about to silently skip a step, don't — either do it, or flag it expl
 
 Before you start a phase, say in a line what you're about to do; brief updates while you work help the human follow along, especially when you find something load-bearing or change direction. Close each autonomous stretch with a short recap that stands on its own — what you found, what you did, and what's next — so a reader who only sees the last message has the full picture.
 
-Terse shorthand is fine between tool calls. Your handoff and your final message are different. Write them for an intelligent but low-context reader: the human has not seen your tool calls, your reasoning or the files you opened, and may be switching in from other work. Each message should be self-contained, so the reader understands it without digging for other context. Put the outcome in the first few sentences, then the one or two things you need from the human, each explained as if new. Practice progressive disclosure in your sentence order: don't use an idea in line 1 that only makes sense once the reader reaches line 12.
-
-Use plain words in clear, full sentences. Don't use a term, label or abbreviation you made up during the work; say what the thing is in a way any reader would understand. When you mention files, commits, or flags, say in plain language what each one is or what changed. Write mostly in the style of ASD-STE100 Simplified Technical English: short sentences, one idea per sentence, active voice, and the same word for the same thing throughout. Use a paragraph of flowing prose where ideas connect, and keep bullets and headers for lists of separate items. Leave out detail the reader doesn't need, but make sure the key context is there.
+Terse shorthand is fine between tool calls. Your handoff and your final message are different. Write them for an intelligent but low-context reader: the human has not seen your tool calls, your reasoning or the files you opened, and may be switching in from other work. Each message should be self-contained, so the reader understands it without digging for other context. Put the outcome in the first few sentences, then anything you need from the human, each explained as if new. Practice progressive disclosure in your sentence order: don't use an idea in line 1 that only makes sense once the reader reaches line 12.
 
 ## Sub-agents and the Workflow tool
 
-Each subagent adds cost: it starts from an empty context, re-reads files you may already have read, runs on whatever model the harness gives it, and you then read its report. Across a run, subagents can be a large share of the total cost. Delegate when the payoff clearly beats that: independent tracks that run well in parallel, a wide investigation whose output you don't need to carry forward, or a pass that needs a reader who hasn't seen your reasoning. Don't delegate work you could finish yourself in a few tool calls. Don't add reviewers or verifiers beyond the review and verification steps this command names; those steps are the review.
-
-When you do delegate, brief the subagent like a peer who knows nothing yet: the goal, what you've already ruled out, the files worth reading, and the shape of the answer you want back. Delegate asynchronously: launch subagents in the background and keep working on the main thread while they run, rather than spawning one and blocking on it. Intervene if a subagent goes off track or is missing relevant context. Use `SendMessage` to continue a long-lived subagent with its context intact instead of respawning it and re-briefing.
+Delegate asynchronously: launch subagents in the background and keep working on the main thread while they run, rather than spawning one and blocking on it. Intervene if a subagent goes off track or is missing relevant context. Use `SendMessage` to continue a long-lived subagent with its context intact instead of respawning it and re-briefing.
 
 ### Single sub-agents (Agent tool)
 
@@ -55,7 +51,7 @@ Spawn a subagent via the Agent tool when one of these is true:
 
 ### Deterministic fan-out (Workflow tool)
 
-When the shape of the work is known up front and you want it orchestrated deterministically rather than improvised turn-by-turn, use the Workflow tool. It runs in the background and reports back when done. A workflow multiplies the per-subagent cost above, so reach for it only when the surface is too large for a single Agent call:
+When the shape of the work is known up front and you want it orchestrated deterministically rather than improvised turn-by-turn, use the Workflow tool. It runs in the background and reports back when done. Reach for it when a single Agent call isn't enough structure:
 
 - **Parallel multi-module build or test generation** (Phase 2.2–2.3) — fan out across independent modules whose files don't overlap.
 - **Verification fan-out** (Phase 3.2) — one agent per acceptance criterion, each trying to break the feature from a different angle.
@@ -157,7 +153,7 @@ Once the human says planning is done and tells you to proceed, work autonomously
 
 From here through the handoff you are operating autonomously. The human is not watching in real time and cannot answer questions mid-task, so avoid stopping while you still owe work the approved spec asks for. Status notes are welcome; carry on with all work that does not depend on the human's answer. If you notice yourself inviting the human to redirect you or offering to wait ("Want me to…?", "Shall I…?"), proceed on the next part of the task instead.
 
-You will meet ordinary obstacles: errors, failing or flaky tests, timeouts, locked files, empty results, failing tools. Diagnose them first. When they are not real blockers, work through them with the access you have (wait and retry, fix the request, use another tool or source) rather than stopping. If someone clearly decided something is a hard blocker — a file marked not to be touched, access that was intentionally withheld, branch protection, a safety guardrail — leave it alone, say plainly what you found, and look for another safe way to finish the task.
+You will meet ordinary obstacles: errors, failing or flaky tests, timeouts, locked files, empty results, failing tools. Diagnose them first. When they are not real blockers, work through them with the access you have (wait and retry, fix the request, use another tool or source) rather than stopping.
 
 These steps need no approval in Phases 2–3, because they are reversible and follow from the approved spec: editing files, running tests and builds, committing and pushing to the feature branch, opening and updating the PR, retrying any command or check that is safe to repeat, replying to and resolving review threads, and writing scratch scripts. These steps need the human, and go in the handoff instead of ending a turn: destructive or irreversible actions, unplanned production infrastructure, merging, and genuine scope changes.
 
@@ -307,7 +303,7 @@ Some of what you learned is worth persisting to memory for future sessions — d
 
 ## Subagent and workflow role examples
 
-Not exhaustive, and each one is a cost (see "Sub-agents and the Workflow tool"). Pattern-match what the task actually needs:
+Not exhaustive — pattern-match what the task actually needs:
 
 - **Explore** (`subagent_type: Explore`) — codebase research, locating patterns, answering "how does X work here."
 - **Plan** (`subagent_type: Plan`) — implementation plans, refactor proposals with tradeoffs.
