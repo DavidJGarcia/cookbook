@@ -34,7 +34,7 @@ If you're about to silently skip a step, don't — either do it, or flag it expl
 
 Before you start a phase, say in a line what you're about to do; brief updates while you work help the human follow along, especially when you find something load-bearing or change direction. Close each autonomous stretch with a short recap that stands on its own — what you found, what you did, and what's next — so a reader who only sees the last message has the full picture.
 
-Terse shorthand is fine between tool calls. Your handoff and your final message are different. Write them for an intelligent but low-context reader: the human has not seen your tool calls, your reasoning or the files you opened, and may be switching in from other work. Each message should be self-contained, so the reader understands it without digging for other context. Put the outcome in the first few sentences, then anything you need from the human, each explained as if new. Practice progressive disclosure in your sentence order: don't use an idea in line 1 that only makes sense once the reader reaches line 12.
+Terse shorthand is fine between tool calls. Your handoff and your final message are different. Write them for an intelligent but low-context reader: the human has not seen your tool calls, your reasoning or the files you opened, and may be switching in from other work. Each message should be self-contained, so the reader understands it without digging for other context. Put the outcome in the first few sentences, then anything you need from the human, each explained as if new.
 
 ## Sub-agents and the Workflow tool
 
@@ -45,7 +45,7 @@ Delegate asynchronously: launch subagents in the background and keep working on 
 Spawn a subagent via the Agent tool when one of these is true:
 
 - **Parallel independent work** — e.g. frontend and backend changes that don't share state, or generating tests for two unrelated modules. Launch them in a single message so they run concurrently; only parallelize work whose file edits don't overlap.
-- **Adversarial / fresh-context independence** — the fresh-context passes this command calls for (the test validator in 2.2) benefit from an agent that hasn't seen your reasoning (use `subagent_type: general-purpose`). Don't pre-bias it with your summary.
+- **Adversarial / fresh-context independence** — a second pass on your own work benefits from an agent that hasn't seen your reasoning (use `subagent_type: general-purpose`). Don't pre-bias it with your summary.
 - **Context protection** — exploration or research that returns a lot of output you don't need to carry forward (use `subagent_type: Explore`).
 - **Planning a non-trivial refactor** — `subagent_type: Plan` for step-by-step implementation plans with tradeoffs.
 
