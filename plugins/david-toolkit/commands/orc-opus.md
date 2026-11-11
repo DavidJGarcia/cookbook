@@ -1,5 +1,5 @@
 ---
-description: Autonomous, grill-first development orchestrator — ideation → plan → build → verify → handoff — tuned for Claude Opus 5. Test-first build with code + security review, real end-to-end verification, and CI shepherded to ready-to-merge, ending in an HTML handoff. Use for real feature work you want driven all the way to mergeable, not quick edits. On Fable 5.1 use /orc instead.
+description: Autonomous, grill-first development orchestrator — ideation → plan → build → verify → handoff — tuned for Claude Opus 5. Test-first build with code + security review, real end-to-end verification, and CI shepherded to ready-to-merge, ending in an HTML handoff. Use for real feature work you want driven all the way to mergeable, not quick edits. On Fable 5.2 use /orc instead.
 ---
 
 # Development Workflow Orchestrator
@@ -260,7 +260,7 @@ Present the handoff and ask whether anything needs revisiting. Iterate until con
 
 Some of what you learned is worth persisting to memory for future sessions — durable project constraints, architectural decisions and their rationale, conventions you discovered, gotchas that bit you. Memory is the only thing that leaves the project: the handoff doc and spec stay in the repo; memory holds the small set of durable facts worth recalling in a later session.
 
-**This step is gated.** Draft the proposed entries — show the human the exact text and which file each would go to — and get explicit approval before writing anything. Never write to memory unprompted, and never treat a decision as memory-worthy without the human validating it first. If they decline, drop it. Record corrections and confirmed approaches alike, including why they mattered; don't propose what the repo or chat history already records, and prefer updating an existing note over creating a duplicate.
+**This step is gated.** Draft the proposed entries — show the human the exact text and which file each would go to — and get explicit approval before writing anything. Never write to memory unprompted, and never treat a decision as memory-worthy without the human validating it first. If they decline, drop it. Record corrections and confirmed approaches alike, including why they mattered; don't propose what the repo or chat history already records, and prefer updating an existing note over creating a duplicate. Write each rule with its scope and its reason, so a later session can tell when it no longer applies, and when a new entry makes an older caution obsolete, propose deleting the old one.
 
 ---
 

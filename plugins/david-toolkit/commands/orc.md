@@ -1,5 +1,5 @@
 ---
-description: Autonomous, grill-first development orchestrator — ideation → plan → build → verify → handoff. Test-first build with multi-pass code + security review, real end-to-end verification, and CI shepherded to ready-to-merge, ending in an HTML handoff. Use for real feature work you want driven all the way to mergeable, not quick edits. Tuned for Claude Fable 5.1; use /orc-opus on Opus 5.
+description: Autonomous, grill-first development orchestrator — ideation → plan → build → verify → handoff. Test-first build with multi-pass code + security review, real end-to-end verification, and CI shepherded to ready-to-merge, ending in an HTML handoff. Use for real feature work you want driven all the way to mergeable, not quick edits. Tuned for Claude Fable 5.2; use /orc-opus on Opus 5.
 ---
 
 # Development Workflow Orchestrator
@@ -34,25 +34,28 @@ If you're about to silently skip a step, don't — either do it, or flag it expl
 
 Before you start a phase, say in a line what you're about to do; brief updates while you work help the human follow along, especially when you find something load-bearing or change direction. Close each autonomous stretch with a short recap that stands on its own — what you found, what you did, and what's next — so a reader who only sees the last message has the full picture.
 
-Terse shorthand is fine between tool calls. Your handoff and your final message are different: they're for a reader who didn't see any of that. Write them as a re-grounding, not a continuation of your working thread — the outcome first, then the one or two things you need from the human, each explained as if new. Drop the working shorthand: complete sentences, terms spelled out, no arrow chains or labels you invented earlier. When you mention files, commits, or flags, give each its own plain-language clause saying what it is or what changed. Use lists and headers when the content is multifaceted enough that they help; keep to prose otherwise.
+Terse shorthand is fine between tool calls. Your handoff and your final message are different. Write them for an intelligent but low-context reader: the human has not seen your tool calls, your reasoning or the files you opened, and may be switching in from other work. Each message should be self-contained, so the reader understands it without digging for other context. Put the outcome in the first few sentences, then the one or two things you need from the human, each explained as if new. Practice progressive disclosure in your sentence order: don't use an idea in line 1 that only makes sense once the reader reaches line 12.
+
+Use plain words in clear, full sentences. Don't use a term, label or abbreviation you made up during the work; say what the thing is in a way any reader would understand. When you mention files, commits, or flags, say in plain language what each one is or what changed. Write mostly in the style of ASD-STE100 Simplified Technical English: short sentences, one idea per sentence, active voice, and the same word for the same thing throughout. Use a paragraph of flowing prose where ideas connect, and keep bullets and headers for lists of separate items. Leave out detail the reader doesn't need, but make sure the key context is there.
 
 ## Sub-agents and the Workflow tool
 
-Default to delegating liberally — any chunk of work with meaningful size or its own large working set belongs in a subagent that returns just the conclusion, and independent tracks should run in parallel. Delegate asynchronously: launch subagents in the background and keep working on the main thread while they run, rather than spawning one and blocking on it. Intervene if a subagent goes off track or is missing relevant context. Use `SendMessage` to continue a long-lived subagent with its context intact instead of respawning it and re-briefing.
+Each subagent adds cost: it starts from an empty context, re-reads files you may already have read, runs on whatever model the harness gives it, and you then read its report. Across a run, subagents can be a large share of the total cost. Delegate when the payoff clearly beats that: independent tracks that run well in parallel, a wide investigation whose output you don't need to carry forward, or a pass that needs a reader who hasn't seen your reasoning. Don't delegate work you could finish yourself in a few tool calls. Don't add reviewers or verifiers beyond the review and verification steps this command names; those steps are the review.
+
+When you do delegate, brief the subagent like a peer who knows nothing yet: the goal, what you've already ruled out, the files worth reading, and the shape of the answer you want back. Delegate asynchronously: launch subagents in the background and keep working on the main thread while they run, rather than spawning one and blocking on it. Intervene if a subagent goes off track or is missing relevant context. Use `SendMessage` to continue a long-lived subagent with its context intact instead of respawning it and re-briefing.
 
 ### Single sub-agents (Agent tool)
 
 Spawn a subagent via the Agent tool when one of these is true:
 
 - **Parallel independent work** — e.g. frontend and backend changes that don't share state, or generating tests for two unrelated modules. Launch them in a single message so they run concurrently; only parallelize work whose file edits don't overlap.
-- **Adversarial / fresh-context independence** — a second pass on your own work benefits from an agent that hasn't seen your reasoning (use `subagent_type: general-purpose`). Don't pre-bias it with your summary.
-- **Meaningful scope** — when a step is sizeable, hand it to a subagent to keep the main thread's working set small and sharp, even if it would technically fit.
+- **Adversarial / fresh-context independence** — the fresh-context passes this command calls for (the test validator in 2.2) benefit from an agent that hasn't seen your reasoning (use `subagent_type: general-purpose`). Don't pre-bias it with your summary.
 - **Context protection** — exploration or research that returns a lot of output you don't need to carry forward (use `subagent_type: Explore`).
 - **Planning a non-trivial refactor** — `subagent_type: Plan` for step-by-step implementation plans with tradeoffs.
 
 ### Deterministic fan-out (Workflow tool)
 
-When the shape of the work is known up front and you want it orchestrated deterministically rather than improvised turn-by-turn, use the Workflow tool. It runs in the background and reports back when done. Reach for it when a single Agent call isn't enough structure:
+When the shape of the work is known up front and you want it orchestrated deterministically rather than improvised turn-by-turn, use the Workflow tool. It runs in the background and reports back when done. A workflow multiplies the per-subagent cost above, so reach for it only when the surface is too large for a single Agent call:
 
 - **Parallel multi-module build or test generation** (Phase 2.2–2.3) — fan out across independent modules whose files don't overlap.
 - **Verification fan-out** (Phase 3.2) — one agent per acceptance criterion, each trying to break the feature from a different angle.
@@ -150,7 +153,15 @@ As many rounds as needed, no artificial limit. Don't stop asking questions prema
 
 Once the human says planning is done and tells you to proceed, work autonomously until the handoff package is ready. Honor the approved plan.
 
-From here through the handoff you are operating autonomously. The human is not watching in real time and cannot answer questions mid-task, so asking "Want me to…?" or "Shall I…?" blocks the work. For reversible actions that follow from the approved spec, proceed without asking. Stop only for destructive actions, unplanned production infrastructure, or genuine scope changes the human must decide — and put those in the handoff rather than ending a turn on them. Before ending any turn in these phases, check your last paragraph: if it is a plan, a question, a list of next steps, or a promise about work you have not done ("I'll…", "next I'll…"), do that work now with tool calls. That includes retrying after errors and gathering missing information yourself. Do not stop because the session is long. End your turn only when the handoff is ready or you are blocked on input only the human can provide.
+#### Finishing work
+
+From here through the handoff you are operating autonomously. The human is not watching in real time and cannot answer questions mid-task, so avoid stopping while you still owe work the approved spec asks for. Status notes are welcome; carry on with all work that does not depend on the human's answer. If you notice yourself inviting the human to redirect you or offering to wait ("Want me to…?", "Shall I…?"), proceed on the next part of the task instead.
+
+You will meet ordinary obstacles: errors, failing or flaky tests, timeouts, locked files, empty results, failing tools. Diagnose them first. When they are not real blockers, work through them with the access you have (wait and retry, fix the request, use another tool or source) rather than stopping. If someone clearly decided something is a hard blocker — a file marked not to be touched, access that was intentionally withheld, branch protection, a safety guardrail — leave it alone, say plainly what you found, and look for another safe way to finish the task.
+
+These steps need no approval in Phases 2–3, because they are reversible and follow from the approved spec: editing files, running tests and builds, committing and pushing to the feature branch, opening and updating the PR, retrying any command or check that is safe to repeat, replying to and resolving review threads, and writing scratch scripts. These steps need the human, and go in the handoff instead of ending a turn: destructive or irreversible actions, unplanned production infrastructure, merging, and genuine scope changes.
+
+Before ending any turn in these phases, check your last paragraph: if it is a plan, a question, a list of next steps, or a promise about work you have not done ("I'll…", "next I'll…"), do that work now with tool calls. Do not stop because the session is long. End your turn only when the handoff is ready, when you are waiting on PR events (3.1), or when the work cannot move forward without input only the human can give.
 
 The approved spec sets the scope, and the scope is the deliverable: don't quietly narrow, widen, or swap it. Don't add features, refactor, or introduce abstractions beyond what the spec requires — a bug fix doesn't need surrounding cleanup, and a one-shot operation usually doesn't need a helper. If you find a pre-existing bug, a performance concern, or behavior the spec doesn't mention, don't fix or extend it in this change unless the requested behavior cannot work without it; record it as a follow-up for the handoff. If one part turns out to be blocked, complete every other part in full and say exactly what you left out and why.
 
@@ -282,7 +293,7 @@ Present the handoff and ask whether anything needs revisiting. Iterate until con
 
 Some of what you learned is worth persisting to memory for future sessions — durable project constraints, architectural decisions and their rationale, conventions you discovered, gotchas that bit you. Memory is the only thing that leaves the project: the handoff doc and spec stay in the repo; memory holds the small set of durable facts worth recalling in a later session.
 
-**This step is gated.** Draft the proposed entries — show the human the exact text and which file each would go to — and get explicit approval before writing anything. Never write to memory unprompted, and never treat a decision as memory-worthy without the human validating it first. If they decline, drop it. Record corrections and confirmed approaches alike, including why they mattered; don't propose what the repo or chat history already records, and prefer updating an existing note over creating a duplicate.
+**This step is gated.** Draft the proposed entries — show the human the exact text and which file each would go to — and get explicit approval before writing anything. Never write to memory unprompted, and never treat a decision as memory-worthy without the human validating it first. If they decline, drop it. Record corrections and confirmed approaches alike, including why they mattered; don't propose what the repo or chat history already records, and prefer updating an existing note over creating a duplicate. Write each rule with its scope and its reason, so a later session can tell when it no longer applies, and when a new entry makes an older caution obsolete, propose deleting the old one.
 
 ---
 
@@ -296,7 +307,7 @@ Some of what you learned is worth persisting to memory for future sessions — d
 
 ## Subagent and workflow role examples
 
-Not exhaustive — pattern-match what the task actually needs:
+Not exhaustive, and each one is a cost (see "Sub-agents and the Workflow tool"). Pattern-match what the task actually needs:
 
 - **Explore** (`subagent_type: Explore`) — codebase research, locating patterns, answering "how does X work here."
 - **Plan** (`subagent_type: Plan`) — implementation plans, refactor proposals with tradeoffs.
