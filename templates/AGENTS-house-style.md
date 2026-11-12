@@ -10,6 +10,8 @@
 
 - When planning or gathering requirements, ask clarifying questions as **one numbered list directly in chat**. The human strongly prefers reading a full list at once — do not use interactive question widgets or polls, and do not drip questions one at a time.
 - Once a change works, step back before you open the PR: building it has taught you about the problem, so ask whether there is a simpler or better approach. If there is, rework it now, even if that means discarding what you wrote, rather than sending the first working version to review.
+- Before you open a PR, review the whole diff as a strict reviewer would, not just your last change. Test every guarantee the change claims against all the various relevant edge cases. Make sure the PR description, specs and docs describe the final code, and that every rename is complete.
+- When a reviewer finds a bug, look for the same mistake elsewhere in the diff and fix every instance. Also consider whether you've learned anything that might expose other issues you should go ahead and address. Test and review the fix itself, then answer all open comments in one push rather than one push per comment.
 - Verify changes on the **staging deployment**, not just locally. "Works on my machine" is not done; "verified on staging" is.
 - **Never merge PRs.** The human merges.
 - **Watch PRs by event, never by timer.** Subscribe, then end the turn — events wake the session. Never arm a scheduled check-in to re-poll a PR. Full posture: `.claude/skills/steward/SKILL.md`.
